@@ -25,6 +25,8 @@
     "dotenv": "^17.2.3",
     "node-napcat-ts": "^0.4.20",
     "openai": "^6.14.0",
+    "redis": "^5.10.0",
+    "tslog": "^4.10.2",
     "zod": "^4.1.13"
   },
   "devDependencies": {

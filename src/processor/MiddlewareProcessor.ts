@@ -1,33 +1,37 @@
-import type { IMiddleware } from '../interfaces/IMiddleware.js'
-import type { IMessage } from '../interfaces/IMessage.js'
-import { NCWebsocket } from 'node-napcat-ts';
+import type { Bot } from '../bot.js';
+import { logger } from '../utils/logger.js';
 
 export class MiddlewareProcessor {
   private middlewares: IMiddleware[] = [];
+  private subLogger = logger.getSubLogger({
+    name: 'MiddlewareProcessor',
+    type: 'pretty',
+  });
 
   use(middleware: IMiddleware): this {
     if (middleware && typeof middleware.process === 'function') {
       // 检查是否重复添加
       if (this.middlewares.includes(middleware)) {
-        console.warn('Middleware already added, skipping...');  
+        this.subLogger.warn('Middleware already added, skipping...');  
+
         return this;
       }
-          console.log(`[MiddlewareProcessor] Registering middleware: ${middleware.constructor.name}`)
+      this.subLogger.info(`Registering middleware: ${middleware.constructor.name}`);
 
       this.middlewares.push(middleware);
     } else {
-      console.warn('Invalid middleware added, skipping...');
+
+      this.subLogger.warn('Invalid middleware added, skipping...');
     }
     return this;
   }
 
-  async processMessage(message: IMessage, napcat: NCWebsocket): Promise<IMessage> {
+  async processMessage(message: IMessage, bot: Bot): Promise<IMessage> {
     try {
-      message.napcat = napcat
       const runner = this.createMiddlewareRunner();
-      return await runner(message);
+      return await runner(message, bot);
     } catch (error: any) {
-      console.error('Middleware processing failed:', error);
+      this.subLogger.error('Middleware processing failed:', error);
       // 返回原始消息或错误消息
       return {
         ...message,
@@ -37,11 +41,11 @@ export class MiddlewareProcessor {
   }
 
   private createMiddlewareRunner() {
-    return async (initialMessage: IMessage): Promise<IMessage> => {
+    return async (initialMessage: IMessage, bot: Bot): Promise<IMessage> => {
       const validMiddlewares = this.middlewares.filter(m => !!m);
       let currentIndex = 0;
 
-      const next = async (message: IMessage): Promise<IMessage> => {
+      const next = async (message: IMessage, bot: Bot): Promise<IMessage> => {
         if (currentIndex >= validMiddlewares.length) {
           return message;
         }
@@ -50,20 +54,20 @@ export class MiddlewareProcessor {
         currentIndex++;
 
         if (!middleware?.process) {
-          console.warn('Invalid middleware in chain, skipping...');
-          return next(message);
+          this.subLogger.warn('Invalid middleware in chain, skipping...');
+          return next(message, bot);
         }
 
         try {
-          return await middleware.process(message, next);
+          return await middleware.process(message, bot, next);
         } catch (error) {
-          console.error('Middleware execution error:', error);
+          this.subLogger.error('Middleware execution error:', error);
           // 继续执行下一个中间件
-          return next(message);
+          return next(message, bot);
         }
       };
 
-      return next(initialMessage);
+      return next(initialMessage, bot);
     };
   }
 }

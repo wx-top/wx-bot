@@ -1,6 +1,10 @@
 import { Bot } from './bot.js';
+import { AiInquiryCommandHandler } from './handlers/commands/AiInquiryCommandHandler.js';
 
-new Bot().start();
+const bot = new Bot()
+bot.registerHandler(new AiInquiryCommandHandler())
+bot.start()
+
 
 
 

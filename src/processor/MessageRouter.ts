@@ -1,24 +1,19 @@
-import type { IMessage } from '../interfaces/IMessage.js'
-import type { IMessageHandler } from '../interfaces/IMessageHandler.js'
+import type { Bot } from '../bot.js'
+import { DefaultHandler } from '../handlers/DefaultHandler.js'
+import { logger } from '../utils/logger.js'
 
 export class MessageRouter {
   private handlers: IMessageHandler[] = []
-  private defaultHandler?: IMessageHandler
+  private defaultHandler = new DefaultHandler();
+  private subLogger = logger.getSubLogger({ name: 'MessageRouter', type: 'pretty' })
+  
 
   /**
    * 注册消息处理器
    */
   registerHandler(handler: IMessageHandler): this {
-    console.log(`[Router] Registering handler: ${handler.name || handler.constructor.name}`)
+    this.subLogger.info(`Registering handler: ${handler.name || handler.constructor.name}`)
     this.handlers.push(handler)
-    return this
-  }
-
-  /**
-   * 设置默认处理器（当没有处理器能处理时使用）
-   */
-  setDefaultHandler(handler: IMessageHandler): this {
-    this.defaultHandler = handler
     return this
   }
 
@@ -38,25 +33,24 @@ export class MessageRouter {
   /**
    * 处理消息
    */
-  async route(message: IMessage): Promise<IMessage> {
+  async route(message: IMessage, bot: Bot): Promise<IMessage> {
     const handler = this.findHandler(message)
     
     if (handler) {
       try {
-        console.log(`[Router] Using handler: ${handler.name || handler.constructor.name}`)
-        const result = await handler.handle(message)
+        this.subLogger.info(`Using handler: ${handler.name || handler.constructor.name}`)
+        const result = await handler.handle(message, bot)
         
         if (result) {
           return result
         }
         return message // 如果处理器没有返回新消息，返回原消息
       } catch (error) {
-        console.error(`[Router] Handler ${handler.name} failed:`, error)
+        this.subLogger.error(`Handler ${handler.name} failed:`, error)
         throw error
       }
     }
-    
-    console.log('[Router] No handler found for message')
+    this.subLogger.warn('No handler found for message')
     return message // 没有处理器，返回原消息
   }
 

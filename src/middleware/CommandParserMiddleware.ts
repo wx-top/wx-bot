@@ -1,5 +1,4 @@
-import type { IMiddleware } from '../interfaces/IMiddleware.js'
-import type { IMessage } from '../interfaces/IMessage.js'
+import type { Bot } from '../bot.js';
 
 
 export class CommandParserMiddleware implements IMiddleware {
@@ -11,7 +10,8 @@ export class CommandParserMiddleware implements IMiddleware {
   
   async process(
     message: IMessage,
-    next: (message: IMessage) => Promise<IMessage>
+    bot: Bot,
+    next: (message: IMessage, bot: Bot) => Promise<IMessage>
   ): Promise<IMessage> {
     // 检查消息是否以命令前缀开头
     if (message.message[0] && message.message[0].type === 'text' && message.message[0].data.text.startsWith(this.commandPrefix)) {
@@ -27,6 +27,6 @@ export class CommandParserMiddleware implements IMiddleware {
       message.isCommand = true;
     }
     
-    return await next(message);
+    return await next(message, bot);
   }
 }
