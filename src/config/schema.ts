@@ -7,6 +7,8 @@ const configSchema = z.object({
   ACCESS_TOKEN: z.string(),
   OPENAI_API_URL: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+  OPENAI_API_MODEL: z.string().default("deepseek-chat"),
+  OPENAI_API_PROMPT: z.string().optional(),
   REDIS_URL: z.string().default("redis://127.0.0.1:6379"),
   REDIS_PASSWORD: z.string().optional(),
   REDIS_DB: z.string().transform(Number).default(0),
