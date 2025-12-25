@@ -14,6 +14,34 @@ class RedisUtils {
     }
 
     /**
+     * Set the model for a session 不过期
+     */
+    static async setModel(sessionId: string, model: string): Promise<void> {
+        try {
+            const client = await this.getClient();
+            const modelKey = `chat:${sessionId}:model`;
+            await client.set(modelKey, model);
+        } catch (error) {
+            this.subLogger.error(`Failed to set model for session ${sessionId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get the model for a session
+     */
+    static async getModel(sessionId: string): Promise<string | null> {
+        try {
+            const client = await this.getClient();
+            const modelKey = `chat:${sessionId}:model`;
+            return await client.get(modelKey);
+        } catch (error) {
+            this.subLogger.error(`Failed to get model for session ${sessionId}:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Add a message to a session's message list
      */
     static async addMessage(sessionId: string, message: IChatMessage, ttl: number = this.defaultTTL): Promise<void> {
@@ -117,6 +145,7 @@ class RedisUtils {
             throw error;
         }
     }
+
 }
 
 export default RedisUtils;

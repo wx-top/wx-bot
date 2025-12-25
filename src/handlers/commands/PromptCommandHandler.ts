@@ -26,7 +26,7 @@ export class PromptCommandHandler extends BaseCommandHandler {
                 message: [Structs.text('请先加入群聊，再咨询AI')],
             })
         } else if (message.message_type === 'group') {
-            const sessionId = `chat:${message.group_id}:${message.user_id}:prompt`
+            const sessionId = `${message.group_id}:${message.user_id}`
             const args = this.getArgs(message)
             if (args.length === 0) {
                 const prompt = await RedisUtils.getPrompt(sessionId)
